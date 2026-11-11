@@ -1,0 +1,949 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AgroMonitor | Painel Inteligente</title>
+
+<style>
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #0b1220;
+  color: #f1f5f9;
+  min-height: 100vh;
+}
+
+header {
+  padding: 22px 6%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #263247;
+  background: #101a2c;
+}
+
+.logo {
+  font-size: 23px;
+  font-weight: bold;
+  color: #4ade80;
+}
+
+.logo span {
+  color: white;
+}
+
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.dot.connected {
+  background: #22c55e;
+}
+
+main {
+  max-width: 1200px;
+  margin: auto;
+  padding: 35px 22px;
+}
+
+.welcome {
+  margin-bottom: 28px;
+}
+
+.welcome h1 {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.welcome p {
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin: 25px 0;
+  flex-wrap: wrap;
+}
+
+button {
+  border: none;
+  padding: 13px 20px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+#connectBtn {
+  background: #16a34a;
+  color: white;
+}
+
+#disconnectBtn {
+  background: #263247;
+  color: white;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.card {
+  background: #172337;
+  border: 1px solid #263750;
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.card h3 {
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: normal;
+  margin-bottom: 18px;
+}
+
+.value {
+  font-size: 34px;
+  font-weight: bold;
+}
+
+.unit {
+  font-size: 15px;
+  color: #94a3b8;
+}
+
+.status {
+  font-size: 23px;
+  font-weight: bold;
+}
+
+.status.seco { color: #f87171; }
+.status.ideal { color: #4ade80; }
+.status.encharcado { color: #60a5fa; }
+.status.aguardando { color: #94a3b8; }
+
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 18px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.indicator i {
+  display: block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #475569;
+}
+
+.indicator .red { background: #ef4444; }
+.indicator .green { background: #22c55e; }
+.indicator .blue { background: #3b82f6; }
+
+.panel {
+  background: #172337;
+  border: 1px solid #263750;
+  border-radius: 14px;
+  padding: 23px;
+  margin-bottom: 20px;
+}
+
+.panel h2 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+canvas {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+
+.alert {
+  padding: 17px;
+  border-radius: 10px;
+  background: #263247;
+  color: #cbd5e1;
+  margin-top: 15px;
+  line-height: 1.5;
+}
+
+.alert.seco {
+  background: #451d28;
+  color: #fecaca;
+}
+
+.alert.ideal {
+  background: #123a2b;
+  color: #bbf7d0;
+}
+
+.alert.encharcado {
+  background: #172f50;
+  color: #bfdbfe;
+}
+
+.alert.erro {
+  background: #451d28;
+  color: #fecaca;
+}
+
+footer {
+  text-align: center;
+  color: #64748b;
+  padding: 25px;
+  font-size: 12px;
+}
+
+@media(max-width: 750px) {
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  header {
+    padding: 18px;
+  }
+
+  .welcome h1 {
+    font-size: 25px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+  <div class="logo">
+    🌱 Agro<span>Monitor</span>
+  </div>
+
+  <div class="connection">
+    <span class="dot" id="connectionDot"></span>
+    <span id="connectionText">Desconectado</span>
+  </div>
+
+</header>
+
+<main>
+
+  <section class="welcome">
+
+    <h1>Painel de monitoramento</h1>
+
+    <p>
+      Acompanhe as condições do solo,
+      a irrigação e os alertas do seu sistema.
+    </p>
+
+  </section>
+
+  <div class="actions">
+
+    <button id="connectBtn">
+      🔌 Conectar Arduino USB
+    </button>
+
+    <button id="disconnectBtn">
+      Desconectar
+    </button>
+
+  </div>
+
+  <section class="cards">
+
+    <div class="card">
+
+      <h3>Leitura do sensor</h3>
+
+      <div class="value">
+        <span id="reading">---</span>
+        <span class="unit">/ 1023</span>
+      </div>
+
+      <div class="indicator">
+        <i class="green"></i>
+        Valor analógico recebido
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h3>Condição do solo</h3>
+
+      <div class="status aguardando" id="soilStatus">
+        Aguardando
+      </div>
+
+      <div class="indicator">
+        <i id="statusDot"></i>
+        <span id="statusDescription">
+          Aguardando leitura
+        </span>
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h3>Tensão do sensor</h3>
+
+      <div class="value">
+        <span id="voltage">--</span>
+        <span class="unit">V</span>
+      </div>
+
+      <div class="indicator">
+        <i class="green"></i>
+        Referência: 5V
+      </div>
+
+    </div>
+
+  </section>
+
+  <section class="cards">
+
+    <div class="card">
+
+      <h3>Estado da bomba</h3>
+
+      <div class="status aguardando" id="pumpStatus">
+        Aguardando
+      </div>
+
+      <div class="indicator">
+        <i id="pumpDot"></i>
+        <span id="pumpDescription">
+          Sem informação
+        </span>
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h3>Comunicação USB</h3>
+
+      <div class="status aguardando" id="usbStatus">
+        Offline
+      </div>
+
+      <div class="indicator">
+        <i id="usbDot"></i>
+        <span id="usbDescription">
+          Nenhuma placa conectada
+        </span>
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h3>Última atualização</h3>
+
+      <div class="value" id="lastUpdate">
+        --:--
+      </div>
+
+      <div class="indicator">
+        <i class="green"></i>
+        Horário local
+      </div>
+
+    </div>
+
+  </section>
+
+  <section class="panel">
+
+    <h2>📊 Histórico do sensor</h2>
+
+    <canvas id="chart"></canvas>
+
+    <div class="indicator">
+      <i class="green"></i>
+      Últimas 30 leituras
+    </div>
+
+  </section>
+
+  <section class="panel">
+
+    <h2>🚨 Central de alertas</h2>
+
+    <div id="alertBox" class="alert">
+      Aguardando conexão com o Arduino...
+    </div>
+
+  </section>
+
+  <section class="panel">
+
+    <h2>Indicadores do sistema</h2>
+
+    <div class="indicator">
+      <i class="red"></i>
+      LED vermelho: solo seco
+    </div>
+
+    <div class="indicator">
+      <i class="green"></i>
+      LED verde: umidade ideal
+    </div>
+
+    <div class="indicator">
+      <i class="blue"></i>
+      LED azul: solo encharcado
+    </div>
+
+    <div class="indicator">
+      <i class="green"></i>
+      Relé no pino D9: controle da bomba
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+  AGROMONITOR © 2026
+  <br><br>
+  Sistema inteligente de monitoramento agrícola
+</footer>
+
+<script>
+
+// ==========================================
+// CONFIGURACAO DA COMUNICACAO USB
+// ==========================================
+
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+
+let port = null;
+let reader = null;
+let keepReading = false;
+let buffer = "";
+
+const history = [];
+
+const readingElement =
+  document.getElementById("reading");
+
+const voltageElement =
+  document.getElementById("voltage");
+
+const soilStatus =
+  document.getElementById("soilStatus");
+
+const pumpStatus =
+  document.getElementById("pumpStatus");
+
+const alertBox =
+  document.getElementById("alertBox");
+
+const connectionDot =
+  document.getElementById("connectionDot");
+
+const connectionText =
+  document.getElementById("connectionText");
+
+let lastDataTime = 0;
+
+// ==========================================
+// STATUS DA CONEXAO
+// ==========================================
+
+function setConnection(connected) {
+
+  connectionDot.classList.toggle(
+    "connected",
+    connected
+  );
+
+  connectionText.textContent =
+    connected ? "Arduino conectado" : "Desconectado";
+
+  document.getElementById("usbStatus").textContent =
+    connected ? "Online" : "Offline";
+
+  document.getElementById("usbDot").className =
+    connected ? "green" : "";
+
+  document.getElementById("usbDescription").textContent =
+    connected
+      ? "Comunicação estabelecida"
+      : "Nenhuma placa conectada";
+
+}
+
+// ==========================================
+// CONECTAR ARDUINO
+// ==========================================
+
+connectBtn.addEventListener("click", async () => {
+
+  if (!("serial" in navigator)) {
+
+    alert(
+      "Seu navegador não suporta Web Serial. Use Google Chrome ou Microsoft Edge."
+    );
+
+    return;
+  }
+
+  try {
+
+    port = await navigator.serial.requestPort();
+
+    await port.open({
+      baudRate: 9600
+    });
+
+    setConnection(true);
+
+    connectBtn.textContent = "Arduino conectado";
+
+    keepReading = true;
+
+    readSerial();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Não foi possível conectar ao Arduino. Verifique o cabo USB e a porta."
+    );
+
+    setConnection(false);
+
+  }
+
+});
+
+// ==========================================
+// RECEBER DADOS PELA USB
+// ==========================================
+
+async function readSerial() {
+
+  if (!port || !port.readable) return;
+
+  reader = port.readable.getReader();
+
+  const decoder = new TextDecoder();
+
+  try {
+
+    while (keepReading) {
+
+      const { value, done } = await reader.read();
+
+      if (done) break;
+
+      buffer += decoder.decode(value, {
+        stream: true
+      });
+
+      const lines = buffer.split("\n");
+
+      buffer = lines.pop();
+
+      for (const line of lines) {
+
+        processData(line.trim());
+
+      }
+
+    }
+
+  } catch (error) {
+
+    console.error("Erro na leitura serial:", error);
+
+    alertBox.className = "alert erro";
+
+    alertBox.textContent =
+      "Erro na comunicação com o Arduino.";
+
+  } finally {
+
+    if (reader) {
+
+      reader.releaseLock();
+
+      reader = null;
+
+    }
+
+  }
+
+}
+
+// ==========================================
+// INTERPRETAR DADOS DO ARDUINO
+// Formato: AGRO,350,ENCHARCADO
+// ==========================================
+
+function processData(line) {
+
+  const parts = line.split(",");
+
+  if (
+    parts.length !== 3 ||
+    parts[0] !== "AGRO"
+  ) {
+
+    return;
+
+  }
+
+  const value = Number(parts[1]);
+
+  const state = parts[2].trim().toUpperCase();
+
+  if (
+    !Number.isFinite(value) ||
+    value < 0 ||
+    value > 1023
+  ) {
+
+    return;
+
+  }
+
+  lastDataTime = Date.now();
+
+  readingElement.textContent = value;
+
+  const voltage = (
+    value * 5 / 1023
+  ).toFixed(2);
+
+  voltageElement.textContent = voltage;
+
+  document.getElementById("lastUpdate").textContent =
+    new Date().toLocaleTimeString("pt-BR");
+
+  updateStatus(state);
+
+  updateChart(value);
+
+}
+
+// ==========================================
+// ATUALIZAR ESTADO DO SOLO E DA BOMBA
+// ==========================================
+
+function updateStatus(state) {
+
+  soilStatus.className = "status";
+
+  pumpStatus.className = "status";
+
+  if (state === "SECO") {
+
+    soilStatus.textContent = "SOLO SECO";
+
+    soilStatus.classList.add("seco");
+
+    document.getElementById("statusDot").className =
+      "red";
+
+    document.getElementById("statusDescription").textContent =
+      "Necessita de irrigação";
+
+    pumpStatus.textContent = "LIGADA";
+
+    pumpStatus.classList.add("seco");
+
+    document.getElementById("pumpDot").className =
+      "red";
+
+    document.getElementById("pumpDescription").textContent =
+      "Comando de ligar enviado";
+
+    alertBox.className = "alert seco";
+
+    alertBox.textContent =
+      "⚠️ Solo seco! A bomba recebeu o comando para ligar.";
+
+  }
+
+  else if (state === "IDEAL") {
+
+    soilStatus.textContent = "UMIDADE IDEAL";
+
+    soilStatus.classList.add("ideal");
+
+    document.getElementById("statusDot").className =
+      "green";
+
+    document.getElementById("statusDescription").textContent =
+      "Condição adequada";
+
+    pumpStatus.textContent = "DESLIGADA";
+
+    pumpStatus.classList.add("ideal");
+
+    document.getElementById("pumpDot").className =
+      "green";
+
+    document.getElementById("pumpDescription").textContent =
+      "Comando de desligar enviado";
+
+    alertBox.className = "alert ideal";
+
+    alertBox.textContent =
+      "✓ Solo adequado! A bomba recebeu o comando para desligar.";
+
+  }
+
+  else if (state === "ENCHARCADO") {
+
+    soilStatus.textContent = "ENCHARCADO";
+
+    soilStatus.classList.add("encharcado");
+
+    document.getElementById("statusDot").className =
+      "blue";
+
+    document.getElementById("statusDescription").textContent =
+      "Excesso de água detectado";
+
+    pumpStatus.textContent = "DESLIGADA";
+
+    pumpStatus.classList.add("ideal");
+
+    document.getElementById("pumpDot").className =
+      "green";
+
+    document.getElementById("pumpDescription").textContent =
+      "Comando de desligar enviado";
+
+    alertBox.className = "alert encharcado";
+
+    alertBox.textContent =
+      "🚨 ALERTA! Solo encharcado. A bomba recebeu o comando para desligar.";
+
+  }
+
+}
+
+// ==========================================
+// GRAFICO DAS LEITURAS
+// ==========================================
+
+function updateChart(value) {
+
+  history.push(value);
+
+  if (history.length > 30) {
+
+    history.shift();
+
+  }
+
+  drawChart();
+
+}
+
+function drawChart() {
+
+  const canvas =
+    document.getElementById("chart");
+
+  const ctx = canvas.getContext("2d");
+
+  const width = canvas.clientWidth;
+
+  const height = 220;
+
+  const ratio =
+    window.devicePixelRatio || 1;
+
+  canvas.width = width * ratio;
+
+  canvas.height = height * ratio;
+
+  ctx.setTransform(
+    ratio, 0, 0, ratio, 0, 0
+  );
+
+  ctx.clearRect(0, 0, width, height);
+
+  // Linhas de referencia
+
+  ctx.strokeStyle = "#334155";
+
+  ctx.lineWidth = 1;
+
+  for (let i = 0; i < 5; i++) {
+
+    const y = 15 + i * 45;
+
+    ctx.beginPath();
+
+    ctx.moveTo(0, y);
+
+    ctx.lineTo(width, y);
+
+    ctx.stroke();
+
+  }
+
+  if (history.length < 2) return;
+
+  ctx.beginPath();
+
+  history.forEach((value, index) => {
+
+    const x =
+      index * (width / 29);
+
+    const y =
+      height - 15 -
+      (value / 1023) * (height - 30);
+
+    if (index === 0) {
+
+      ctx.moveTo(x, y);
+
+    } else {
+
+      ctx.lineTo(x, y);
+
+    }
+
+  });
+
+  ctx.strokeStyle = "#4ade80";
+
+  ctx.lineWidth = 3;
+
+  ctx.lineJoin = "round";
+
+  ctx.stroke();
+
+}
+
+// ==========================================
+// DESCONECTAR ARDUINO
+// ==========================================
+
+disconnectBtn.addEventListener("click", async () => {
+
+  keepReading = false;
+
+  if (reader) {
+
+    try {
+
+      await reader.cancel();
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+  if (port) {
+
+    try {
+
+      await port.close();
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+  }
+
+  port = null;
+
+  reader = null;
+
+  buffer = "";
+
+  setConnection(false);
+
+  connectBtn.textContent =
+    "🔌 Conectar Arduino USB";
+
+  soilStatus.textContent = "Aguardando";
+
+  soilStatus.className = "status aguardando";
+
+  pumpStatus.textContent = "Aguardando";
+
+  pumpStatus.className = "status aguardando";
+
+  document.getElementById("statusDescription").textContent =
+    "Aguardando leitura";
+
+  document.getElementById("pumpDescription").textContent =
+    "Sem informação";
+
+  alertBox.className = "alert";
+
+  alertBox.textContent =
+    "Arduino desconectado.";
+
+});
+
+// ==========================================
+// REDIMENSIONAR GRAFICO
+// ==========================================
+
+window.addEventListener("resize", drawChart);
+
+drawChart();
+
+</script>
+
+</body>
+</html>
